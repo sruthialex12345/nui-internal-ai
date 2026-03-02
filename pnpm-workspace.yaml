@@ -24,7 +24,7 @@ catalogs:
     '@tanstack/react-table': 8.21.3
     '@tanstack/router-cli': 1.159.4
     '@tanstack/router-devtools': ^1.133.1
-    '@tanstack/router-vite-plugin': ^1.132.56
+    '@tanstack/router-vite-plugin': 1.159.4
     '@types/node': ^24.6.0
     '@types/react': ^19.1.16
     '@types/react-dom': ^19.1.9

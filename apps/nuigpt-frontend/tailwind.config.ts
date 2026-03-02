@@ -3,10 +3,12 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "../../packages/ui/**/*.{js,ts,jsx,tsx}", // Important: This lets Tailwind style your shared atoms
+    // Specific path to avoid scanning node_modules
+    "../../packages/ui/atoms/**/*.{js,ts,jsx,tsx}", 
+    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {},
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 }
