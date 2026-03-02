@@ -1,0 +1,30 @@
+{
+  "name": "@repo/dev-tools",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./metrics": "./dist/metrics/index.js",
+    "./vite-plugin": "./dist/vite-plugin/index.js"
+  },
+  "bin": {
+    "dev-metrics": "./dist/cli/devMetrics.js",
+    "dev-metrics-quick": "./dist/cli/quickMetrics.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.4.2"
+  },
+  "peerDependencies": {
+    "vite": "^6.0.0"
+  }
+}

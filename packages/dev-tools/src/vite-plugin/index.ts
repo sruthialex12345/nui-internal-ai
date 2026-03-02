@@ -1,0 +1,1 @@
+export { devMetricsPlugin, type DevMetricsOptions } from './devMetrics.js';

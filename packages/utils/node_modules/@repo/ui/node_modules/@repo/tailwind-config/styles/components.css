@@ -1,0 +1,437 @@
+/* InvestGrade IQ Design System - Shared Components */
+
+/* Leaf House Design System - Organic Elements */
+@layer components {
+  .organic-shadow {
+    box-shadow:
+      0 4px 20px rgba(80, 153, 128, 0.12),
+      0 1px 3px rgba(80, 153, 128, 0.08);
+  }
+
+  .organic-shadow-lg {
+    box-shadow:
+      0 10px 40px rgba(80, 153, 128, 0.15),
+      0 4px 16px rgba(80, 153, 128, 0.1);
+  }
+
+  .nature-gradient {
+    background: linear-gradient(135deg, #f8fafb 0%, #e8f2f0 100%);
+  }
+
+  .sage-gradient {
+    background: linear-gradient(135deg, #87d3c0 0%, #6bb6a3 100%);
+  }
+
+  .earth-gradient {
+    background: linear-gradient(135deg, #e8f2f0 0%, #d1e7dd 100%);
+  }
+
+  .teal-gradient {
+    background: linear-gradient(135deg, #509980 0%, #6bb6a3 100%);
+  }
+
+  .slate-gradient {
+    background: linear-gradient(135deg, #153947 0%, #1f4a5a 100%);
+  }
+
+  .organic-border {
+    border: 1px solid rgba(80, 153, 128, 0.15);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(248, 250, 251, 0.95) 100%
+    );
+    backdrop-filter: blur(8px);
+  }
+
+  .leaf-pattern::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(80, 153, 128, 0.08) 40%,
+      rgba(80, 153, 128, 0.15) 50%,
+      rgba(80, 153, 128, 0.08) 60%,
+      transparent 70%
+    );
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .nature-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nature-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 32px rgba(80, 153, 128, 0.15),
+      0 2px 8px rgba(80, 153, 128, 0.12);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(248, 250, 251, 0.98) 100%
+    );
+  }
+
+  .organic-input {
+    background: rgba(248, 250, 251, 0.8);
+    border: 1px solid rgba(80, 153, 128, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .organic-input:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(80, 153, 128, 0.4);
+    box-shadow: 0 0 0 3px rgba(80, 153, 128, 0.15);
+  }
+
+  .earth-accent {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .earth-accent::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .earth-accent:hover::after {
+    left: 100%;
+  }
+
+  /* Custom menu item with specific rounded corners */
+  .menu-item-selected {
+    background-color: rgb(80, 153, 128);
+    color: white;
+    border-radius: 12px 0 12px 0;
+  }
+
+  /* Grade badge styling to match navigation menu items */
+  .grade-badge {
+    border-radius: 12px 0 12px 0;
+  }
+
+  /* Custom tab styling to match teal theme */
+  .teal-tabs [data-slot="tabs-trigger"][data-state="active"] {
+    background-color: rgb(80, 153, 128) !important;
+    color: white !important;
+    border-color: rgb(80, 153, 128) !important;
+  }
+
+  .teal-tabs [data-slot="tabs-trigger"][data-state="active"]:hover {
+    background-color: rgb(61, 122, 102) !important;
+  }
+
+  /* Page header styling for consistent black text */
+  .page-title,
+  .page-header,
+  .section-title {
+    color: #1a2025 !important;
+  }
+
+  /* Ensure all header elements in page sections have black text */
+  [data-page-section] h1,
+  [data-page-section] h2,
+  [data-page-section] h3,
+  [data-page-section] h4,
+  .page-content h1,
+  .page-content h2,
+  .page-content h3,
+  .page-content h4 {
+    color: #1a2025 !important;
+  }
+
+  /* Global page alignment to match Document Manager exactly */
+  .global-page-layout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-width: 1440px;
+    width: 100%;
+  }
+
+  .global-page-header {
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+  }
+
+  .global-page-header-content {
+    padding: 1.5rem; /* p-6 equivalent - matches Document Manager */
+  }
+
+  .global-page-body {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .global-page-body-content {
+    padding: 1.5rem; /* p-6 equivalent - matches Document Manager */
+  }
+
+  /* Ensure main content area starts right next to sidebar */
+  main.page-main {
+    flex: 1;
+    overflow: auto;
+  }
+
+  /* Apply global layout structure to all pages that don't have custom layout */
+  .page-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-width: 1440px;
+    width: 100%;
+  }
+
+  /* Track Changes Highlighting - Dynamic Collaborator Colors */
+  .track-changes-insert {
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    background-color: var(--collaborator-bg);
+    color: var(--collaborator-text);
+    border-left: 3px solid var(--collaborator-color);
+  }
+
+  .track-changes-delete {
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    background-color: var(--collaborator-bg);
+    color: var(--collaborator-text);
+    border-left: 3px solid var(--collaborator-color);
+    text-decoration-color: var(--collaborator-color);
+  }
+
+  .track-changes-format {
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    background-color: var(--collaborator-bg);
+    color: var(--collaborator-text);
+    border-left: 3px solid var(--collaborator-color);
+  }
+
+  /* Collaborator color utilities */
+  .collaborator-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--collaborator-bg);
+    color: var(--collaborator-text);
+    border: 1px solid var(--collaborator-color);
+  }
+
+  .collaborator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--collaborator-color);
+  }
+
+  .collaborator-avatar {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Field drag and selection controls */
+  .document-field {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .document-field .field-content {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+  }
+
+  .document-field .field-content * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+  }
+
+  .document-field .resize-handle {
+    pointer-events: auto !important;
+    user-select: none;
+  }
+
+  .document-field.dragging {
+    cursor: grabbing !important;
+    z-index: 1000;
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    transition: none; /* Disable transitions during drag for better performance */
+  }
+
+  /* Enhanced visual feedback for field interactions */
+  .document-field:hover {
+    box-shadow: 0 2px 8px rgba(80, 153, 128, 0.15);
+  }
+
+  .document-field.selected {
+    box-shadow: 0 4px 16px rgba(80, 153, 128, 0.25);
+  }
+
+  /* Resize handle hover effects */
+  .resize-handle {
+    pointer-events: auto !important;
+    user-select: none !important;
+  }
+
+  .resize-handle:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 8px rgba(80, 153, 128, 0.3);
+  }
+
+  /* Ensure resize handles are always visible and clickable */
+  .document-field .resize-handle {
+    pointer-events: auto !important;
+    z-index: 1000 !important;
+  }
+
+  /* Global dragging state */
+  body.dragging {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    touch-action: none !important;
+  }
+
+  body.dragging * {
+    cursor: inherit !important;
+  }
+
+  /* Resize handle cursors */
+  .resize-handle-nw {
+    cursor: nw-resize !important;
+  }
+  .resize-handle-ne {
+    cursor: ne-resize !important;
+  }
+  .resize-handle-sw {
+    cursor: sw-resize !important;
+  }
+  .resize-handle-se {
+    cursor: se-resize !important;
+  }
+  .resize-handle-n {
+    cursor: n-resize !important;
+  }
+  .resize-handle-s {
+    cursor: s-resize !important;
+  }
+  .resize-handle-e {
+    cursor: e-resize !important;
+  }
+  .resize-handle-w {
+    cursor: w-resize !important;
+  }
+}
+
+/* Custom scrollbar styling - Clean, normal-looking scrollbar with teal theme */
+.nature-scrollbar {
+  ::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(31, 74, 90, 0.2) !important;
+    border-radius: 4px !important;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(80, 153, 128, 0.4) !important;
+    border-radius: 4px !important;
+    transition: background 0.2s ease !important;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(80, 153, 128, 0.6) !important;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(80, 153, 128, 1) !important;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: rgba(80, 153, 128, 0.4) !important;
+  }
+
+  /* Firefox support */
+  scrollbar-width: auto !important;
+  scrollbar-color: rgba(80, 153, 128, 0.4) #f1f5f9 !important;
+}
+
+/* Table styling for Plans/Clients */
+@layer components {
+  .client-row {
+    border-bottom: none !important;
+    transition: background-color 0.15s ease;
+  }
+
+  .client-row.client-group-first {
+    border-top: 2px solid var(--border) !important;
+  }
+
+  .client-row.client-hover {
+    background-color: var(--accent) !important;
+  }
+
+  /* Factsheet Designer action blocks */
+  .factsheet-action-block {
+    background-color: #768e97 !important;
+  }
+
+  .factsheet-action-block .card-header {
+    color: white !important;
+  }
+
+  .factsheet-action-block h3,
+  .factsheet-action-block p {
+    color: white !important;
+  }
+
+  .factsheet-action-block .text-primary {
+    color: white !important;
+  }
+
+  .factsheet-action-block:hover {
+    background-color: #5d7480 !important;
+  }
+}

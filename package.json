@@ -1,0 +1,44 @@
+{
+  "name": "nui-starter",
+  "private": true,
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "check:types": "turbo run typecheck",
+    "check:format": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "fix:format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:packages": "turbo run test --filter='./packages/*'",
+    "reset:modules": "rimraf node_modules pnpm-lock.yaml .turbo dist \"**/*/node_modules\" \"**/*/.turbo\" \"**/*/dist\"",
+    "reset:full": "pnpm store prune && npm run reset:modules && pnpm install",
+    "dev:admin": "turbo run dev --filter=@nui/admin",
+    "build:admin": "turbo run build --filter=@nui/admin",
+    "metrics:admin": "turbo run metrics --filter=@nui/admin",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish",
+    "pin-version": "node scripts/pin-version.js"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,md,json}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/test-config": "workspace:*",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.1.2",
+    "turbo": "^2.5.8",
+    "typescript": "5.4.2",
+    "vitest": "^2.1.8"
+  }
+}

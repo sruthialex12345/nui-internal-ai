@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Import shared InvestGrade IQ design system styles */
+@import "./base.css";
+@import "./components.css";
+
+/* Ensure Tailwind scans our shared UI package sources */
+@source "../../../packages/components/v1";
+@source "../../../packages/ui";
+@source "../node_modules/@repo/components-v1";
+@source "../node_modules/@repo/ui";
+
+@custom-variant dark (&:is(.dark *));

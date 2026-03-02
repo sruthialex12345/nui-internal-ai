@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src", "**/*.ts", "**/*.tsx", "vite.config.ts"],
+  "exclude": ["node_modules"]
+}

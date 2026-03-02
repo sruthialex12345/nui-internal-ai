@@ -1,0 +1,1 @@
+{"version":3,"file":"quickMetrics.d.ts","sourceRoot":"","sources":["../../src/metrics/quickMetrics.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAOH,MAAM,WAAW,kBAAkB;IACjC,OAAO,EAAE,MAAM,CAAC;IAChB,OAAO,EAAE,MAAM,CAAC;IAChB,gBAAgB,CAAC,EAAE,MAAM,CAAC;IAC1B,WAAW,CAAC,EAAE,MAAM,CAAC;CACtB;AAED,qBAAa,YAAY;IACvB,OAAO,CAAC,MAAM,CAAqB;gBAEvB,MAAM,EAAE,kBAAkB;IAQhC,aAAa;CAgGpB"}
