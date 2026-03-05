@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.services';
 
 @Injectable()
@@ -20,6 +20,33 @@ export class ChatsService {
       orderBy: { updatedAt: 'desc' },
     });
   }
+
+  async searchChats(userId: string, query: string) {
+  return this.prisma.chat.findMany({
+    where: {
+      userId,
+      title: {
+        contains: query,
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+}
+  async deleteChat(userId: string, chatId: string) {
+  const chat = await this.prisma.chat.findUnique({
+    where: { id: chatId },
+  });
+
+  if (!chat || chat.userId !== userId) {
+    throw new ForbiddenException('Access denied');
+  }
+
+  return this.prisma.chat.delete({
+    where: { id: chatId },
+  });
+}
 
   async getChatById(userId: string, chatId: string) {
     const chat = await this.prisma.chat.findFirst({

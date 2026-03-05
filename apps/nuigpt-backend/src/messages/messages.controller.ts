@@ -2,8 +2,11 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Body,
   Query,
+  Param,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -28,7 +31,7 @@ export class MessagesController {
     );
   }
 
-  @Get()
+@Get()
   async getMessages(
     @Req() req: any,
     @Query('chatId') chatId: string,
@@ -37,5 +40,22 @@ export class MessagesController {
       req.user.sub,
       chatId,
     );
+  }
+
+  @Patch(':id')
+  async updateMessage(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.messagesService.updateMessage(req.user.sub, id, body.content);
+  }
+
+  @Delete(':id')
+  async deleteMessage(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    return this.messagesService.deleteMessage(req.user.sub, id);
   }
 }

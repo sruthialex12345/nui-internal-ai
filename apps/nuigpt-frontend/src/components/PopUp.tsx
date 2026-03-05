@@ -83,7 +83,7 @@ export function PopUp({ onClose, type, data }: PopUpProps) {
               <div className="flex flex-col min-w-0">
                                 
                 <span className="text-[13px] font-semibold truncate leading-none">
-                  RIXCY S
+                  SRUTHI ALEX
                 </span>
                                 
                 <span className="text-[11px] text-gray-400 truncate mt-1">

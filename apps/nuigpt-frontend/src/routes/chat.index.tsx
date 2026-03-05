@@ -1,7 +1,85 @@
-import { createFileRoute } from "@tanstack/react-router";
+// import { createFileRoute } from "@tanstack/react-router";
+// import { useState, useRef, useEffect } from "react";
+// import { Button, Card } from "@repo/ui/atoms";
+// import { ArrowUp, Paperclip } from "lucide-react";
+
+// export const Route = createFileRoute("/chat/")({
+//   component: ChatPage,
+// });
+
+// function ChatPage() {
+//   const [text, setText] = useState("");
+//   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+//   useEffect(() => {
+//     if (textareaRef.current) {
+//       textareaRef.current.style.height = "auto";
+//       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+//     }
+//   }, [text]);
+
+//   return (
+//     <div className="flex flex-col h-full items-center max-w-3xl mx-auto w-full px-4 relative pt-20">
+
+//       <div className="flex-1 flex flex-col items-center justify-center opacity-10">
+
+//         <div className="w-16 h-16 border border-gray-400 rounded-full flex items-center justify-center mb-4">
+//           <div className="w-8 h-8 bg-black rounded-sm rotate-45" />
+//         </div>
+//         <h1 className="text-3xl font-semibold">How can I help you today?</h1>
+
+//       </div>
+
+//       <div className="w-full pb-8">
+
+//         <Card className="bg-[#F4F4F4] border-none rounded-[28px] p-3 shadow-none focus-within:ring-1 ring-gray-200 transition-all">
+
+//           <textarea
+//             ref={textareaRef}
+//             value={text}
+//             onChange={(e) => setText(e.target.value)}
+//             placeholder="Message nui-bot"
+//             rows={1}
+//             className="w-full bg-transparent border-none outline-none text-black resize-none min-h-[44px] px-3 py-1 text-[16px] overflow-hidden"
+//           />
+
+//           <div className="flex justify-between items-center mt-2 px-1">
+
+//             <Button
+//               variant="ghost"
+//               size="icon"
+//               className="rounded-full h-9 w-9 text-gray-500"
+//             >
+
+//               <Paperclip size={20} />
+
+//             </Button>
+
+//             <Button
+//               className={`rounded-full h-8 w-8 p-0 flex items-center justify-center ${text ? "bg-black" : "bg-[#E5E5E5]"}`}
+//               disabled={!text}
+//             >
+
+//               <ArrowUp size={20} strokeWidth={3} />
+
+//             </Button>
+
+//           </div>
+
+//         </Card>
+
+//       </div>
+
+//     </div>
+//   );
+// }
+
+
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Button, Card } from "@repo/ui/atoms";
-import { ArrowUp, Paperclip } from "lucide-react";
+import { Plus, ArrowUp } from "lucide-react";
+import { api } from "../lib/api";
+import { useTheme } from "./chat";
 
 export const Route = createFileRoute("/chat/")({
   component: ChatPage,
@@ -10,6 +88,8 @@ export const Route = createFileRoute("/chat/")({
 function ChatPage() {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
+  const { dark } = useTheme()
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -18,58 +98,166 @@ function ChatPage() {
     }
   }, [text]);
 
+  const handleSend = async () => {
+    if (!text.trim()) return;
+    const content = text.trim();
+    setText("");
+    try {
+      const chatRes = await api.post("/chats");
+      const chatId = chatRes.data.id;
+      await api.post("/messages", { chatId, role: "USER", content });
+      navigate({ to: "/chat/$chatId", params: { chatId } });
+    } catch (err) {
+      console.error("Error starting chat", err);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full items-center max-w-3xl mx-auto w-full px-4 relative pt-20">
+    <>
+      <style>{`
+        .ci-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: #ffffff;
+  padding: 0 16px;
+}
+.ci-root.dark { background: #212121; }
+.ci-root.dark .ci-greeting { color: #ececec; }
+.ci-root.dark .ci-input-wrap { background: #2f2f2f; border-color: #3a3a3a; }
+.ci-root.dark .ci-textarea { color: #ececec; }
+.ci-root.dark .ci-textarea::placeholder { color: #6b6b6b; }
+.ci-root.dark .ci-plus-btn { color: #8e8ea0; }
+.ci-root.dark .ci-plus-btn:hover { background: #3a3a3a; color: #ececec; }
+.ci-root.dark .ci-send-btn { background: #ececec; color: #0d0d0d; }
+.ci-root.dark .ci-send-btn:disabled { background: #3a3a3a; color: #6b6b6b; }
+.ci-root.dark .ci-disclaimer { color: #6b6b6b; }
 
-      <div className="flex-1 flex flex-col items-center justify-center opacity-10">
+        .ci-greeting {
+          font-size: 28px;
+          font-weight: 600;
+          color: #0d0d0d;
+          margin-bottom: 28px;
+          text-align: center;
+          letter-spacing: -0.3px;
+        }
 
-        <div className="w-16 h-16 border border-gray-400 rounded-full flex items-center justify-center mb-4">
-          <div className="w-8 h-8 bg-black rounded-sm rotate-45" />
-        </div>
-        <h1 className="text-3xl font-semibold">How can I help you today?</h1>
+        .ci-input-wrap {
+          width: 100%;
+          max-width: 720px;
+          background: #ffffff;
+          border: 1px solid #e5e5e5;
+          border-radius: 999px;
+          padding: 14px 14px 14px 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+          transition: box-shadow 0.15s, border-color 0.15s;
+        }
+        .ci-input-wrap:focus-within {
+          border-color: #c4c4c4;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
 
-      </div>
+        .ci-plus-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #6b6b6b;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.12s;
+        }
+        .ci-plus-btn:hover { background: #f0f0f0; color: #0d0d0d; }
 
-      <div className="w-full pb-8">
+        .ci-textarea {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          resize: none;
+          font-size: 15px;
+          font-family: inherit;
+          color: #0d0d0d;
+          line-height: 1.5;
+          min-height: 24px;
+          max-height: 180px;
+          overflow-y: auto;
+          padding: 0;
+        }
+        .ci-textarea::placeholder { color: #8e8ea0; }
 
-        <Card className="bg-[#F4F4F4] border-none rounded-[28px] p-3 shadow-none focus-within:ring-1 ring-gray-200 transition-all">
+        .ci-send-btn {
+          background: #0d0d0d;
+          border: none;
+          cursor: pointer;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.12s;
+        }
+        .ci-send-btn:disabled {
+          background: #e5e5e5;
+          color: #acacac;
+          cursor: default;
+        }
+        .ci-send-btn:not(:disabled):hover { background: #2a2a2a; }
 
+        .ci-disclaimer {
+          font-size: 12px;
+          color: #8e8ea0;
+          margin-top: 16px;
+          text-align: center;
+        }
+      `}</style>
+
+      <div className={`ci-root${dark ? " dark" : ""}`}>
+
+        <h1 className="ci-greeting">What can I help with?</h1>
+
+        <div className="ci-input-wrap">
+          <button className="ci-plus-btn">
+            <Plus size={18} />
+          </button>
           <textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Message nui-bot"
+            placeholder="Ask anything"
             rows={1}
-            className="w-full bg-transparent border-none outline-none text-black resize-none min-h-[44px] px-3 py-1 text-[16px] overflow-hidden"
+            className="ci-textarea"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
+          <button
+            className="ci-send-btn"
+            disabled={!text.trim()}
+            onClick={handleSend}
+          >
+            <ArrowUp size={18} strokeWidth={2.5} />
+          </button>
+        </div>
 
-          <div className="flex justify-between items-center mt-2 px-1">
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full h-9 w-9 text-gray-500"
-            >
-
-              <Paperclip size={20} />
-
-            </Button>
-
-            <Button
-              className={`rounded-full h-8 w-8 p-0 flex items-center justify-center ${text ? "bg-black" : "bg-[#E5E5E5]"}`}
-              disabled={!text}
-            >
-
-              <ArrowUp size={20} strokeWidth={3} />
-
-            </Button>
-
-          </div>
-
-        </Card>
-
+        <p className="ci-disclaimer">NUIGPT can make mistakes. Check important info.</p>
       </div>
-
-    </div>
+    </>
   );
 }
