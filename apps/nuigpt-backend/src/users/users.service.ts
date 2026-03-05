@@ -30,7 +30,12 @@ async lockUser(userId: string) {
     data: { isActive: false },
   });
 }
-
+async updatePreferredModel(userId: string, model: string) {
+  return this.prisma.user.update({
+    where: { id: userId },
+    data: { preferredModel: model }
+  })
+}
 async unlockUser(userId: string) {
   return this.prisma.user.update({
     where: { id: userId },

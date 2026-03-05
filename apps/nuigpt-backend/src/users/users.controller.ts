@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { Patch, Body } from '@nestjs/common';
@@ -27,6 +27,11 @@ export class UsersController {
       req.user.sub,
       dto.preferredModel,
     );
+  }
+  @Patch('me/model')
+  @UseGuards(JwtAuthGuard)
+  async updateModel(@Req() req: any, @Body() body: { model: string }) {
+    return this.usersService.updatePreferredModel(req.user.sub, body.model);
   }
   @Patch(':id/lock')
   @UseGuards(JwtAuthGuard)

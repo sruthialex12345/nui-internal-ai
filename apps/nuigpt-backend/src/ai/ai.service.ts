@@ -119,9 +119,15 @@ export class AiService {
     });
   }
 
-  async respond(userId: string, chatId: string, res: Response) {
+  async respond(
+    userId: string,
+    chatId: string,
+    res: Response,
+    imageBase64?: string,
+    imageMime?: string,
+  ) {
     // 1️⃣ Validate chat ownership
-const chat = await this.prisma.chat.findUnique({
+    const chat = await this.prisma.chat.findUnique({
       where: { id: chatId },
     });
 
@@ -130,7 +136,9 @@ const chat = await this.prisma.chat.findUnique({
 
     // 2️⃣ Get user model preference
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const model = user?.preferredModel ?? 'gpt-4o-mini';
+    const model = imageBase64
+      ? 'gpt-4o'
+      : (user?.preferredModel ?? 'gpt-4o-mini');
 
     // 3️⃣ Fetch messages fresh from DB (ensures deletes are committed)
     const freshMessages = await this.prisma.message.findMany({
@@ -148,10 +156,38 @@ const chat = await this.prisma.chat.findUnique({
       content: msg.content,
     })) as OpenAI.Chat.Completions.ChatCompletionMessageParam[];
 
+    // If image provided, replace last user message with vision format
+    if (imageBase64) {
+      const base64Data = imageBase64.split(',')[1];
+      const lastUserIdx = [...formattedMessages]
+        .reverse()
+        .findIndex((m) => m.role === 'user');
+      if (lastUserIdx !== -1) {
+        const realIdx = formattedMessages.length - 1 - lastUserIdx;
+        formattedMessages[realIdx] = {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${imageMime ?? 'image/png'};base64,${base64Data}`,
+              },
+            },
+            {
+              type: 'text',
+              text:
+                (formattedMessages[realIdx].content as string) ||
+                'What is in this image?',
+            },
+          ],
+        };
+      }
+    }
+
     // 4️⃣ System prompt
     const systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
       role: 'system',
-      content: `You are a helpful, knowledgeable AI assistant. 
+      content: `You are a helpful, knowledgeable AI assistant . 
 - Be concise and clear in your responses
 - Use markdown formatting where appropriate (code blocks, bold, bullet points)
 - For code, always specify the language in code blocks

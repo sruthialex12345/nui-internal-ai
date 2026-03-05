@@ -77,8 +77,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Plus, ArrowUp } from "lucide-react";
-import { api } from "../lib/api";
+import { Plus, ArrowUp, X } from "lucide-react"; import { api } from "../lib/api";
 import { useTheme } from "./chat";
 
 export const Route = createFileRoute("/chat/")({
@@ -90,6 +89,32 @@ function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
   const { dark } = useTheme()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageBase64, setImageBase64] = useState<string | null>(null)
+  const [imageMime, setImageMime] = useState<string>("image/png")
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return
+    setImageMime(file.type)
+    const reader = new FileReader()
+    reader.onload = (e) => setImageBase64(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile()
+          if (file) handleImageFile(file)
+        }
+      }
+    }
+    window.addEventListener("paste", handlePaste)
+    return () => window.removeEventListener("paste", handlePaste)
+  }, [])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -99,14 +124,21 @@ function ChatPage() {
   }, [text]);
 
   const handleSend = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !imageBase64) return;
     const content = text.trim();
+    const currentImage = imageBase64
+    const currentMime = imageMime
     setText("");
+    setImageBase64(null)
     try {
-      const chatRes = await api.post("/chats");
-      const chatId = chatRes.data.id;
-      await api.post("/messages", { chatId, role: "USER", content });
-      navigate({ to: "/chat/$chatId", params: { chatId } });
+const chatRes = await api.post("/chats");
+const chatId = chatRes.data.id;
+if (currentImage) {
+  sessionStorage.setItem("pendingImage", currentImage)
+  sessionStorage.setItem("pendingMime", currentMime)
+}
+sessionStorage.setItem("pendingContent", content)
+navigate({ to: "/chat/$chatId", params: { chatId } });
     } catch (err) {
       console.error("Error starting chat", err);
     }
@@ -145,19 +177,52 @@ function ChatPage() {
           letter-spacing: -0.3px;
         }
 
-        .ci-input-wrap {
-          width: 100%;
-          max-width: 720px;
-          background: #ffffff;
-          border: 1px solid #e5e5e5;
-          border-radius: 999px;
-          padding: 14px 14px 14px 20px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-          transition: box-shadow 0.15s, border-color 0.15s;
-        }
+       .ci-input-wrap {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 24px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.ci-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ci-img-preview {
+  position: relative;
+  display: inline-block;
+  margin-left: 4px;
+}
+.ci-img-preview img {
+  height: 60px;
+  width: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e5e5;
+  display: block;
+}
+.ci-img-preview-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #0d0d0d;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
         .ci-input-wrap:focus-within {
           border-color: #c4c4c4;
           box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -229,31 +294,43 @@ function ChatPage() {
 
         <h1 className="ci-greeting">What can I help with?</h1>
 
+
         <div className="ci-input-wrap">
-          <button className="ci-plus-btn">
-            <Plus size={18} />
-          </button>
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Ask anything"
-            rows={1}
-            className="ci-textarea"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-          <button
-            className="ci-send-btn"
-            disabled={!text.trim()}
-            onClick={handleSend}
-          >
-            <ArrowUp size={18} strokeWidth={2.5} />
-          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = "" }} />
+          {imageBase64 && (
+            <div className="ci-img-preview">
+              <img src={imageBase64} alt="preview" />
+              <button className="ci-img-preview-remove" onClick={() => setImageBase64(null)}>
+                <X size={10} />
+              </button>
+            </div>
+          )}
+          <div className="ci-input-row">
+            <button className="ci-plus-btn" onClick={() => fileInputRef.current?.click()}>
+              <Plus size={18} />
+            </button>
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Ask anything"
+              rows={1}
+              className="ci-textarea"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            <button
+              className="ci-send-btn"
+              disabled={!text.trim() && !imageBase64}
+              onClick={handleSend}
+            >
+              <ArrowUp size={18} strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
 
         <p className="ci-disclaimer">NUIGPT can make mistakes. Check important info.</p>

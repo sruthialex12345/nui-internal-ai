@@ -19,9 +19,6 @@
 //   }
 // }
 
-
-
-
 import { Controller, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -35,9 +32,15 @@ export class AiController {
   @Post('respond')
   async respond(
     @Req() req: any,
-    @Body() body: { chatId: string },
+    @Body() body: { chatId: string; imageBase64?: string; imageMime?: string },
     @Res() res: Response,
   ) {
-    return this.aiService.respond(req.user.sub, body.chatId, res);
+    return this.aiService.respond(
+      req.user.sub,
+      body.chatId,
+      res,
+      body.imageBase64,
+      body.imageMime,
+    );
   }
 }

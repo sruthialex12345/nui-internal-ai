@@ -122,7 +122,19 @@ function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const initFiredRef = useRef(false)
+  const sessionImageRef = useRef<{ base64: string; mime: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageBase64, setImageBase64] = useState<string | null>(null)
+  const [imageMime, setImageMime] = useState<string>("image/png")
 
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return
+    setImageMime(file.type)
+    const reader = new FileReader()
+    reader.onload = (e) => setImageBase64(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }
   const stopGeneration = () => {
     abortControllerRef.current?.abort()
     setLoading(false)
@@ -168,7 +180,9 @@ function ChatPage() {
           const data = line.replace("data: ", "").trim()
           try {
             const parsed = JSON.parse(data)
-            if (parsed.done) break
+            if (parsed.done) {
+              break
+            }
             if (parsed.delta) {
               aiMessage += parsed.delta
               setMessages(prev =>
@@ -199,14 +213,38 @@ function ChatPage() {
     setTimeout(() => setCopiedMap(prev => ({ ...prev, [id]: false })), 2000)
   }
   useEffect(() => {
+    initFiredRef.current = false
     const init = async () => {
+      if (initFiredRef.current) return
+      initFiredRef.current = true
       try {
+        // Check for pending content from landing page
+        const pendingContent = sessionStorage.getItem("pendingContent")
+        sessionStorage.removeItem("pendingContent")
+
+        if (pendingContent !== null && pendingContent.trim() !== "") {
+          await api.post("/messages", { chatId, role: "USER", content: pendingContent })
+        } else if (pendingContent !== null && pendingContent.trim() === "") {
+          // Image-only message — save with placeholder so AI knows to look at the image
+          await api.post("/messages", { chatId, role: "USER", content: "What is in this image?" })
+        }
         const res = await api.get(`/messages?chatId=${chatId}`)
         setMessages(res.data)
 
-        // If last message is from USER, auto-trigger AI
         const last = res.data[res.data.length - 1]
         if (last?.role === "USER") {
+          const pendingImage = sessionStorage.getItem("pendingImage")
+          const pendingMime = sessionStorage.getItem("pendingMime") ?? "image/png"
+          sessionStorage.removeItem("pendingImage")
+          sessionStorage.removeItem("pendingMime")
+
+          if (pendingImage) {
+            sessionImageRef.current = { base64: pendingImage, mime: pendingMime }
+            setMessages(prev => prev.map((m, i) =>
+              i === prev.length - 1 ? { ...m, imageBase64: pendingImage } : m
+            ))
+          }
+
           setLoading(true)
           setMessages(prev => [...prev, { id: "ai-stream", role: "ASSISTANT", content: "" }])
 
@@ -218,7 +256,7 @@ function ChatPage() {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ chatId }),
+            body: JSON.stringify({ chatId, imageBase64: pendingImage, imageMime: pendingMime }),
             signal: abortControllerRef.current.signal
           })
 
@@ -235,7 +273,9 @@ function ChatPage() {
               const data = line.replace("data: ", "").trim()
               try {
                 const parsed = JSON.parse(data)
-                if (parsed.done) break
+                if (parsed.done) {
+                  break
+                }
                 if (parsed.delta) {
                   aiMessage += parsed.delta
                   setMessages(prev =>
@@ -273,10 +313,39 @@ function ChatPage() {
     }
   }, [input])
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile()
+          if (file) handleImageFile(file)
+        }
+      }
+    }
+    window.addEventListener("paste", handlePaste)
+    return () => window.removeEventListener("paste", handlePaste)
+  }, [])
+
   const loadMessages = async () => {
     try {
       const res = await api.get(`/messages?chatId=${chatId}`)
-      setMessages(res.data)
+      setMessages(prev => {
+        // Build map by ID for real IDs, and also by position for temp messages
+        const imageMapById: Record<string, string> = {}
+        const imageMapByContent: Record<string, string> = {}
+        prev.forEach(m => {
+          if (m.imageBase64) {
+            imageMapById[m.id] = m.imageBase64
+            imageMapByContent[m.content?.trim()] = m.imageBase64
+          }
+        })
+        return res.data.map((m: any) => ({
+          ...m,
+          imageBase64: imageMapById[m.id] ?? imageMapByContent[m.content?.trim()] ?? m.imageBase64
+        }))
+      })
     } catch (err) {
       console.error("Error loading messages")
     }
@@ -328,7 +397,9 @@ function ChatPage() {
           const data = line.replace("data: ", "").trim()
           try {
             const parsed = JSON.parse(data)
-            if (parsed.done) break
+            if (parsed.done) {
+              break
+            }
             if (parsed.delta) {
               aiMessage += parsed.delta
               setMessages(prev => prev.map(m => m.id === "ai-stream" ? { ...m, content: aiMessage } : m))
@@ -346,13 +417,22 @@ function ChatPage() {
   }
 
   const sendMessage = async () => {
-    if (!input.trim() || loading) return
+    if ((!input.trim() && !imageBase64) || loading) return
     const content = input.trim()
+    const currentImage = imageBase64
+    const currentMime = imageMime
+    if (currentImage) {
+      sessionImageRef.current = { base64: currentImage, mime: currentMime }
+    }
+    // For follow-up messages with no new image, use the session image
+    const imageToSend = currentImage ?? sessionImageRef.current?.base64 ?? null
+    const mimeToSend = currentMime ?? sessionImageRef.current?.mime ?? "image/png"
     setInput("")
+    setImageBase64(null)
     setLoading(true)
 
     // Optimistically add user message
-    const tempMsg = { id: "temp-" + Date.now(), role: "USER", content }
+    const tempMsg = { id: "temp-" + Date.now(), role: "USER", content, imageBase64: currentImage }
     setMessages(prev => [...prev, tempMsg])
 
     try {
@@ -372,7 +452,7 @@ function ChatPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ chatId }),
+        body: JSON.stringify({ chatId, imageBase64: imageToSend, imageMime: mimeToSend }),
         signal: abortControllerRef.current.signal
       })
 
@@ -391,7 +471,9 @@ function ChatPage() {
           const data = line.replace("data: ", "").trim()
           try {
             const parsed = JSON.parse(data)
-            if (parsed.done) break
+            if (parsed.done) {
+              break
+            }
             if (parsed.delta) {
               aiMessage += parsed.delta
               setMessages(prev =>
@@ -554,18 +636,51 @@ function ChatPage() {
         }
 
         .ca-input-wrap {
-          max-width: 720px;
-          margin: 0 auto;
-          background: #ffffff;
-          border: 1px solid #e5e5e5;
-          border-radius: 999px;
-          padding: 14px 14px 14px 20px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-          transition: box-shadow 0.15s, border-color 0.15s;
-        }
+  max-width: 720px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 24px;
+  padding: 10px 14px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.ca-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ca-img-preview {
+  position: relative;
+  display: inline-block;
+  margin-left: 4px;
+}
+.ca-img-preview img {
+  height: 60px;
+  width: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e5e5;
+  display: block;
+}
+.ca-img-preview-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #0d0d0d;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
         .ca-input-wrap:focus-within {
           border-color: #c4c4c4;
           box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -659,11 +774,16 @@ function ChatPage() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <button onClick={() => { setEditingId(msg.id); setEditText(msg.content) }} style={{ background: "none", border: "none", cursor: "pointer", color: "#8e8ea0", padding: "4px", borderRadius: "6px", opacity: 0, transition: "opacity 0.1s" }} className="ca-edit-btn">
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                      <button onClick={() => { setEditingId(msg.id); setEditText(msg.content) }} style={{ background: "none", border: "none", cursor: "pointer", color: "#8e8ea0", padding: "4px", borderRadius: "6px", opacity: 0, transition: "opacity 0.1s", marginTop: "8px", flexShrink: 0 }} className="ca-edit-btn">
                         <Pencil size={13} />
                       </button>
-                      <div className="ca-bubble-user">{msg.content}</div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", maxWidth: "80%" }}>
+                        {msg.imageBase64 && (
+                          <img src={msg.imageBase64} alt="uploaded" style={{ maxWidth: "260px", maxHeight: "200px", borderRadius: "12px", objectFit: "cover", display: "block" }} />
+                        )}
+                        {msg.content && <div className="ca-bubble-user">{msg.content}</div>}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -764,36 +884,47 @@ function ChatPage() {
 
         <div className="ca-input-area">
           <div className="ca-input-wrap">
-            <button className="ca-plus-btn">
-              <Plus size={18} />
-            </button>
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything"
-              rows={1}
-              className="ca-textarea"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  sendMessage()
-                }
-              }}
-            />
-            {loading ? (
-              <button className="ca-send-btn" onClick={stopGeneration}>
-                <Square size={14} fill="currentColor" />
-              </button>
-            ) : (
-              <button
-                className="ca-send-btn"
-                disabled={!input.trim()}
-                onClick={sendMessage}
-              >
-                <ArrowUp size={18} strokeWidth={2.5} />
-              </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = "" }} />
+            {imageBase64 && (
+              <div className="ca-img-preview">
+                <img src={imageBase64} alt="preview" />
+                <button className="ca-img-preview-remove" onClick={() => setImageBase64(null)}>
+                  <X size={10} />
+                </button>
+              </div>
             )}
+            <div className="ca-input-row">
+              <button className="ca-plus-btn" onClick={() => fileInputRef.current?.click()}>
+                <Plus size={18} />
+              </button>
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask anything"
+                rows={1}
+                className="ca-textarea"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    sendMessage()
+                  }
+                }}
+              />
+              {loading ? (
+                <button className="ca-send-btn" onClick={stopGeneration}>
+                  <Square size={14} fill="currentColor" />
+                </button>
+              ) : (
+                <button
+                  className="ca-send-btn"
+                  disabled={!input.trim() && !imageBase64}
+                  onClick={sendMessage}
+                >
+                  <ArrowUp size={18} strokeWidth={2.5} />
+                </button>
+              )}
+            </div>
           </div>
           <p className="ca-disclaimer">NUIGPT can make mistakes. Check important info.</p>
         </div>

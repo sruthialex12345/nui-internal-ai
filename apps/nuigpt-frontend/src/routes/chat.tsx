@@ -266,13 +266,31 @@ function ChatLayout() {
     const [search, setSearch] = useState("")
     const activeChatId = router.location.pathname.split("/").pop()
     const [dark, setDark] = useState(false)
-    const toggleDark = () => setDark(prev => !prev)
-    useEffect(() => {
-        api.get("/users/me")
-            .then(res => console.log("User:", res.data))
-            .catch(err => console.log("Error status:", err.response?.status))
-    }, [])
+const toggleDark = () => setDark(prev => !prev)
+const [selectedModel, setSelectedModel] = useState("gpt-4o-mini")
+const [modelDropOpen, setModelDropOpen] = useState(false)
 
+const models = [
+  { id: "gpt-4o-mini", name: "GPT-4o mini", sub: "Fast & efficient" },
+  { id: "gpt-4o", name: "GPT-4o", sub: "Most capable" },
+]
+
+const selectModel = async (modelId: string) => {
+  setSelectedModel(modelId)
+  setModelDropOpen(false)
+  try {
+    await api.patch("/users/me/model", { model: modelId })
+  } catch (err) {
+    console.error("Failed to save model preference")
+  }
+}
+  useEffect(() => {
+    api.get("/users/me")
+        .then(res => {
+          if (res.data.preferredModel) setSelectedModel(res.data.preferredModel)
+        })
+        .catch(err => console.log("Error status:", err.response?.status))
+}, [])
     useEffect(() => { loadChats() }, [])
 
     const loadChats = async () => {
@@ -285,11 +303,10 @@ function ChatLayout() {
     }
 
     useEffect(() => {
-        const closeMenu = () => setActivePop(null)
-        window.addEventListener("click", closeMenu)
-        return () => window.removeEventListener("click", closeMenu)
-    }, [])
-
+    const closeMenu = () => { setActivePop(null); setModelDropOpen(false) }
+    window.addEventListener("click", closeMenu)
+    return () => window.removeEventListener("click", closeMenu)
+}, [])
     useEffect(() => {
         const token = localStorage.getItem("token")
         if (!token) {
@@ -802,11 +819,37 @@ function ChatLayout() {
                                         </button>
                                     </>
                                 )}
-                                <button className="c-model-btn" onClick={() => console.log("model select")}>
-                                    <span className="c-model-name">NUIGPT</span>
-                                    <span className="c-model-sub">Auto</span>
-                                    <ChevronDown size={14} style={{ color: "#6b6b6b" }} />
-                                </button>
+                               <div style={{ position: "relative" }}>
+  <button className="c-model-btn" onClick={(e) => { e.stopPropagation(); setModelDropOpen(p => !p) }}>
+    <span className="c-model-name">NUIGPT</span>
+    <span className="c-model-sub">{models.find(m => m.id === selectedModel)?.name ?? "Auto"}</span>
+    <ChevronDown size={14} style={{ color: "#6b6b6b" }} />
+  </button>
+  {modelDropOpen && (
+    <div style={{
+      position: "absolute", top: "calc(100% + 6px)", left: 0,
+      background: dark ? "#2a2a2a" : "#ffffff",
+      border: `1px solid ${dark ? "#3a3a3a" : "#e5e5e5"}`,
+      borderRadius: "12px", padding: "6px", zIndex: 200,
+      minWidth: "200px", boxShadow: "0 4px 20px rgba(0,0,0,0.12)"
+    }}>
+      {models.map(m => (
+        <button key={m.id} onClick={() => selectModel(m.id)} style={{
+          display: "flex", flexDirection: "column", alignItems: "flex-start",
+          width: "100%", background: selectedModel === m.id ? (dark ? "#3a3a3a" : "#f0f0f0") : "none",
+          border: "none", cursor: "pointer", padding: "10px 12px", borderRadius: "8px",
+          fontFamily: "inherit", transition: "background 0.1s", gap: "2px"
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = dark ? "#3a3a3a" : "#f0f0f0")}
+        onMouseLeave={e => (e.currentTarget.style.background = selectedModel === m.id ? (dark ? "#3a3a3a" : "#f0f0f0") : "none")}
+        >
+          <span style={{ fontSize: "14px", fontWeight: 500, color: dark ? "#ececec" : "#0d0d0d" }}>{m.name}</span>
+          <span style={{ fontSize: "12px", color: "#8e8ea0" }}>{m.sub}</span>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
                             </div>
                             <div className="c-header-right">
                                 <button className="c-hdr-btn" onClick={() => console.log("share")}>
