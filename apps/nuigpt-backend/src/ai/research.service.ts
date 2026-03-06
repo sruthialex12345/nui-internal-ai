@@ -1,23 +1,3 @@
-
-// import { Injectable } from '@nestjs/common';
-// import { TavilyClient } from 'tavily';
-
-// @Injectable()
-// export class ResearchService {
-//   private tavily = new TavilyClient({
-//     apiKey: process.env.TAVILY_API_KEY,
-//   });
-
-//   async search(query: string) {
-//     const result = await this.tavily.search({
-//       query,
-//       search_depth: 'advanced',
-//       max_results: 5,
-//     });
-
-//     return result.results;
-//   }
-// }
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
